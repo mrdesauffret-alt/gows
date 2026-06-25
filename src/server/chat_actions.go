@@ -6,7 +6,10 @@ import (
 	"time"
 
 	__ "github.com/devlikeapro/gows/proto"
+	"github.com/golang/protobuf/proto"
 	"go.mau.fi/whatsmeow/appstate"
+	waCommon "go.mau.fi/whatsmeow/proto/waCommon"
+	waSyncAction "go.mau.fi/whatsmeow/proto/waSyncAction"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 )
@@ -106,4 +109,68 @@ func (s *Server) GetBlocklist(ctx context.Context, req *__.Session) (*__.Blockli
 		jids = append(jids, j.String())
 	}
 	return &__.BlocklistResponse{Jids: jids}, nil
+}
+
+func syncActionMessageRange(lastMessageTimestamp time.Time, lastMessageKey *waCommon.MessageKey) *waSyncAction.SyncActionMessageRange {
+	if lastMessageTimestamp.IsZero() {
+		lastMessageTimestamp = time.Now()
+	}
+	messageRange := &waSyncAction.SyncActionMessageRange{
+		LastMessageTimestamp: proto.Int64(lastMessageTimestamp.Unix()),
+	}
+	if lastMessageKey != nil {
+		messageRange.Messages = []*waSyncAction.SyncActionMessage{{
+			Key:       lastMessageKey,
+			Timestamp: proto.Int64(lastMessageTimestamp.Unix()),
+		}}
+	}
+	return messageRange
+}
+
+func buildClearChat(target types.JID, lastMessageTimestamp time.Time, lastMessageKey *waCommon.MessageKey) appstate.PatchInfo {
+	action := &waSyncAction.ClearChatAction{
+		MessageRange: syncActionMessageRange(lastMessageTimestamp, lastMessageKey),
+	}
+	return appstate.PatchInfo{
+		Type: appstate.WAPatchRegularHigh,
+		Mutations: []appstate.MutationInfo{{
+			Index:   []string{appstate.IndexClearChat, target.String()},
+			Version: 6,
+			Value: &waSyncAction.SyncActionValue{
+				ClearChatAction: action,
+			},
+		}},
+	}
+}
+
+func (s *Server) DeleteChat(ctx context.Context, req *__.JidRequest) (*__.Empty, error) {
+	cli, err := s.Sm.Get(req.GetSession().GetId())
+	if err != nil {
+		return nil, err
+	}
+	jid, err := types.ParseJID(req.GetJid())
+	if err != nil {
+		return nil, err
+	}
+	patch := appstate.BuildDeleteChat(jid, time.Now(), nil, false)
+	if err := cli.SendAppState(ctx, patch); err != nil {
+		return nil, err
+	}
+	return &__.Empty{}, nil
+}
+
+func (s *Server) ClearChat(ctx context.Context, req *__.JidRequest) (*__.Empty, error) {
+	cli, err := s.Sm.Get(req.GetSession().GetId())
+	if err != nil {
+		return nil, err
+	}
+	jid, err := types.ParseJID(req.GetJid())
+	if err != nil {
+		return nil, err
+	}
+	patch := buildClearChat(jid, time.Now(), nil)
+	if err := cli.SendAppState(ctx, patch); err != nil {
+		return nil, err
+	}
+	return &__.Empty{}, nil
 }

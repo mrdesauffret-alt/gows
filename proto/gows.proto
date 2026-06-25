@@ -122,6 +122,8 @@ service MessageService {
   rpc UnmuteChat(JidRequest) returns (Empty);
   rpc UpdateBlockStatus(UpdateBlockStatusRequest) returns (Empty);
   rpc GetBlocklist(Session) returns (BlocklistResponse);
+  rpc DeleteChat(JidRequest) returns (Empty);
+  rpc ClearChat(JidRequest) returns (Empty);
 
   //
   // Message
