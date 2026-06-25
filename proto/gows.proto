@@ -110,6 +110,22 @@ service MessageService {
   rpc UpdateGroupParticipants(UpdateParticipantsRequest) returns (JsonList);
 
   //
+  // Communities
+  //
+  rpc ListCommunities(Session) returns (JsonList);
+  rpc GetCommunity(JidRequest) returns (Json);
+  rpc CreateCommunity(CreateCommunityRequest) returns (Json);
+  rpc LeaveCommunity(JidRequest) returns (Empty);
+  rpc GetCommunityLinkedGroups(JidRequest) returns (Json);
+  rpc LinkCommunityGroup(CommunityGroupLinkRequest) returns (Empty);
+  rpc UnlinkCommunityGroup(CommunityGroupLinkRequest) returns (Empty);
+  rpc CreateCommunityGroup(CreateCommunityGroupRequest) returns (Json);
+  rpc SetCommunitySubject(JidStringRequest) returns (Empty);
+  rpc SetCommunityDescription(JidStringRequest) returns (Empty);
+  rpc GetCommunityInviteLink(JidRequest) returns (OptionalString);
+  rpc JoinCommunity(GroupCodeRequest) returns (Json);
+
+  //
   // Actions
   //
   rpc GetProfilePicture (ProfilePictureRequest) returns (ProfilePictureResponse);
@@ -127,6 +143,9 @@ service MessageService {
   rpc StarMessage(StarMessageRequest) returns (Empty);
   rpc PinMessage(PinMessageRequest) returns (Empty);
   rpc UnpinMessage(UnpinMessageRequest) returns (Empty);
+  rpc GetPrivacySettings(Session) returns (PrivacySettingsResponse);
+  rpc UpdatePrivacySettings(UpdatePrivacySettingsRequest) returns (PrivacySettingsResponse);
+  rpc ReadStatus(ReadStatusRequest) returns (Empty);
 
   //
   // Message
@@ -314,6 +333,25 @@ message UpdateParticipantsRequest {
 message GroupCodeRequest {
   Session session = 1;
   string code = 2;
+}
+
+message CreateCommunityRequest {
+  Session session = 1;
+  string subject = 2;
+  string description = 3;
+}
+
+message CreateCommunityGroupRequest {
+  Session session = 1;
+  string communityJid = 2;
+  string subject = 3;
+  repeated string participants = 4;
+}
+
+message CommunityGroupLinkRequest {
+  Session session = 1;
+  string communityJid = 2;
+  string groupJid = 3;
 }
 
 
