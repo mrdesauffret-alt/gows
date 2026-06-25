@@ -124,6 +124,9 @@ service MessageService {
   rpc GetBlocklist(Session) returns (BlocklistResponse);
   rpc DeleteChat(JidRequest) returns (Empty);
   rpc ClearChat(JidRequest) returns (Empty);
+  rpc StarMessage(StarMessageRequest) returns (Empty);
+  rpc PinMessage(PinMessageRequest) returns (Empty);
+  rpc UnpinMessage(UnpinMessageRequest) returns (Empty);
 
   //
   // Message
@@ -545,6 +548,29 @@ message UpdateBlockStatusRequest {
 
 message BlocklistResponse {
   repeated string jids = 1;
+}
+
+message StarMessageRequest {
+  Session session = 1;
+  string jid = 2;
+  string sender = 3;
+  string messageId = 4;
+  bool star = 5;
+}
+
+message PinMessageRequest {
+  Session session = 1;
+  string jid = 2;
+  string sender = 3;
+  string messageId = 4;
+  int64 duration_seconds = 5;
+}
+
+message UnpinMessageRequest {
+  Session session = 1;
+  string jid = 2;
+  string sender = 3;
+  string messageId = 4;
 }
 
 message PhoneInfo {

@@ -9,6 +9,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.mau.fi/whatsmeow/appstate"
 	waCommon "go.mau.fi/whatsmeow/proto/waCommon"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	waSyncAction "go.mau.fi/whatsmeow/proto/waSyncAction"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -170,6 +171,104 @@ func (s *Server) ClearChat(ctx context.Context, req *__.JidRequest) (*__.Empty, 
 	}
 	patch := buildClearChat(jid, time.Now(), nil)
 	if err := cli.SendAppState(ctx, patch); err != nil {
+		return nil, err
+	}
+	return &__.Empty{}, nil
+}
+
+func (s *Server) StarMessage(ctx context.Context, req *__.StarMessageRequest) (*__.Empty, error) {
+	cli, err := s.Sm.Get(req.GetSession().GetId())
+	if err != nil {
+		return nil, err
+	}
+	target, err := types.ParseJID(req.GetJid())
+	if err != nil {
+		return nil, err
+	}
+	sender, err := types.ParseJID(req.GetSender())
+	if err != nil {
+		return nil, err
+	}
+	fromMe := false
+	if cli.Store.ID != nil && sender.User == cli.Store.ID.User {
+		fromMe = true
+	} else if sender.User == cli.Store.LID.User && cli.Store.LID.User != "" {
+		fromMe = true
+	}
+	patch := appstate.BuildStar(target, sender, req.GetMessageId(), fromMe, req.GetStar())
+	if err := cli.SendAppState(ctx, patch); err != nil {
+		return nil, err
+	}
+	return &__.Empty{}, nil
+}
+
+func buildPinInChatMessage(
+	cli interface {
+		BuildMessageKey(chat, sender types.JID, id types.MessageID) *waCommon.MessageKey
+	},
+	chat types.JID,
+	sender types.JID,
+	messageID types.MessageID,
+	durationSeconds int64,
+	pin bool,
+) *waE2E.Message {
+	pinType := waE2E.PinInChatMessage_PIN_FOR_ALL
+	if !pin {
+		pinType = waE2E.PinInChatMessage_UNPIN_FOR_ALL
+	}
+	message := &waE2E.Message{
+		PinInChatMessage: &waE2E.PinInChatMessage{
+			Key:               cli.BuildMessageKey(chat, sender, messageID),
+			Type:              pinType.Enum(),
+			SenderTimestampMS: proto.Int64(time.Now().UnixMilli()),
+		},
+	}
+	if pin && durationSeconds > 0 {
+		message.MessageContextInfo = &waE2E.MessageContextInfo{
+			MessageAddOnDurationInSecs: proto.Uint32(uint32(durationSeconds)),
+			MessageAddOnExpiryType:     waE2E.MessageContextInfo_STATIC.Enum(),
+		}
+	}
+	return message
+}
+
+func (s *Server) PinMessage(ctx context.Context, req *__.PinMessageRequest) (*__.Empty, error) {
+	cli, err := s.Sm.Get(req.GetSession().GetId())
+	if err != nil {
+		return nil, err
+	}
+	chat, err := types.ParseJID(req.GetJid())
+	if err != nil {
+		return nil, err
+	}
+	sender, err := types.ParseJID(req.GetSender())
+	if err != nil {
+		return nil, err
+	}
+	message := buildPinInChatMessage(cli, chat, sender, req.GetMessageId(), req.GetDurationSeconds(), true)
+	_, err = cli.SendMessage(ctx, chat, message)
+	if err != nil {
+		return nil, err
+	}
+	return &__.Empty{}, nil
+}
+
+func (s *Server) UnpinMessage(ctx context.Context, req *__.UnpinMessageRequest) (*__.Empty, error) {
+	cli, err := s.Sm.Get(req.GetSession().GetId())
+	if err != nil {
+		return nil, err
+	}
+	chat, err := types.ParseJID(req.GetJid())
+	if err != nil {
+		return nil, err
+	}
+	sender, err := types.ParseJID(req.GetSender())
+	if err != nil {
+		return nil, err
+	}
+	message := buildPinInChatMessage(cli, chat, sender, req.GetMessageId(), 0, false)
+	_, err = cli.SendMessage(ctx, chat, message)
+	if err != nil {
 		return nil, err
 	}
 	return &__.Empty{}, nil
