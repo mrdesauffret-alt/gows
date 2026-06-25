@@ -16,8 +16,8 @@ var _ pb.MessageServiceServer = (*Server)(nil)
 var _ pb.EventStreamServer = (*Server)(nil)
 
 type Server struct {
-	pb.UnsafeMessageServiceServer
-	pb.UnsafeEventStreamServer
+	pb.UnimplementedMessageServiceServer
+	pb.UnimplementedEventStreamServer
 	Sm  *gows.SessionManager
 	log waLog.Logger
 
