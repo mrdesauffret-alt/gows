@@ -18,7 +18,7 @@ func (s *Server) AddChatLabel(ctx context.Context, req *__.ChatLabelRequest) (*_
 		return nil, err
 	}
 	patch := appstate.BuildLabelChat(jid, req.GetLabelId(), true)
-	if err := cli.SendAppState(patch); err != nil {
+	if err := cli.SendAppState(ctx, patch); err != nil {
 		return nil, err
 	}
 	return &__.Empty{}, nil
@@ -34,7 +34,7 @@ func (s *Server) RemoveChatLabel(ctx context.Context, req *__.ChatLabelRequest) 
 		return nil, err
 	}
 	patch := appstate.BuildLabelChat(jid, req.GetLabelId(), false)
-	if err := cli.SendAppState(patch); err != nil {
+	if err := cli.SendAppState(ctx, patch); err != nil {
 		return nil, err
 	}
 	return &__.Empty{}, nil

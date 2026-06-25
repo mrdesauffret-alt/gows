@@ -104,11 +104,11 @@ type ConnectedEventData struct {
 
 func BuildSession(ctx context.Context, log waLog.Logger, dialect string, address string) (*GoWS, error) {
 	// Prepare the database
-	container, err := sqlstore.New(dialect, address, log.Sub("Database"))
+	container, err := sqlstore.New(ctx, dialect, address, log.Sub("Database"))
 	if err != nil {
 		return nil, err
 	}
-	deviceStore, err := container.GetFirstDevice()
+	deviceStore, err := container.GetFirstDevice(ctx)
 	if err != nil {
 		_ = container.Close()
 		return nil, err

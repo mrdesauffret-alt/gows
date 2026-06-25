@@ -31,7 +31,7 @@ func (s *Server) MuteChat(ctx context.Context, req *__.ChatMuteRequest) (*__.Emp
 		remaining := time.Duration(muteEndMs-time.Now().UnixMilli()) * time.Millisecond
 		if remaining <= 0 {
 			patch := appstate.BuildMute(jid, false, 0)
-			if err := cli.SendAppState(patch); err != nil {
+			if err := cli.SendAppState(ctx, patch); err != nil {
 				return nil, err
 			}
 			return &__.Empty{}, nil
@@ -45,7 +45,7 @@ func (s *Server) MuteChat(ctx context.Context, req *__.ChatMuteRequest) (*__.Emp
 	}
 
 	patch := appstate.BuildMute(jid, true, muteDuration)
-	if err := cli.SendAppState(patch); err != nil {
+	if err := cli.SendAppState(ctx, patch); err != nil {
 		return nil, err
 	}
 	return &__.Empty{}, nil
@@ -61,7 +61,7 @@ func (s *Server) UnmuteChat(ctx context.Context, req *__.JidRequest) (*__.Empty,
 		return nil, err
 	}
 	patch := appstate.BuildMute(jid, false, 0)
-	if err := cli.SendAppState(patch); err != nil {
+	if err := cli.SendAppState(ctx, patch); err != nil {
 		return nil, err
 	}
 	return &__.Empty{}, nil
@@ -85,7 +85,7 @@ func (s *Server) UpdateBlockStatus(ctx context.Context, req *__.UpdateBlockStatu
 	default:
 		return nil, errors.New("invalid block action")
 	}
-	_, err = cli.UpdateBlocklist(jid, action)
+	_, err = cli.UpdateBlocklist(ctx, jid, action)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (s *Server) GetBlocklist(ctx context.Context, req *__.Session) (*__.Blockli
 	if err != nil {
 		return nil, err
 	}
-	list, err := cli.GetBlocklist()
+	list, err := cli.GetBlocklist(ctx)
 	if err != nil {
 		return nil, err
 	}
