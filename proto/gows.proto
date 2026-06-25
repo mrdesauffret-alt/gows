@@ -364,6 +364,7 @@ enum MediaType {
   VIDEO = 2;
   DOCUMENT = 3;
   PTV = 4;
+  STICKER = 5;
 }
 
 message AudioInfo {
@@ -586,6 +587,30 @@ message UpdateBlockStatusRequest {
 
 message BlocklistResponse {
   repeated string jids = 1;
+}
+
+message PrivacySettingsResponse {
+  map<string, string> categories = 1;
+  bool link_previews_disabled = 2;
+}
+
+message UpdatePrivacySettingsRequest {
+  Session session = 1;
+  OptionalString lastSeen = 2;
+  OptionalString profilePicture = 3;
+  OptionalString status = 4;
+  OptionalString readReceipts = 5;
+  OptionalString groupsAdd = 6;
+  OptionalString online = 7;
+  OptionalString calls = 8;
+  OptionalString messages = 9;
+  OptionalBool linkPreviewsDisabled = 10;
+}
+
+message ReadStatusRequest {
+  Session session = 1;
+  string contactId = 2;
+  string statusId = 3;
 }
 
 message StarMessageRequest {

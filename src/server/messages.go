@@ -6,6 +6,7 @@ import (
 	"github.com/devlikeapro/gows/media"
 	"github.com/devlikeapro/gows/proto"
 	"github.com/golang/protobuf/proto"
+	"github.com/h2non/bimg"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
@@ -174,6 +175,32 @@ func (s *Server) SendMessage(ctx context.Context, req *__.MessageRequest) (*__.M
 				FileSHA256:    mediaResponse.FileSHA256,
 				FileLength:    &mediaResponse.FileLength,
 				JPEGThumbnail: thumbnail,
+			}
+		case __.MediaType_STICKER:
+			mediaType = whatsmeow.MediaImage
+			mediaResponse, err = cli.UploadMedia(ctx, jid, req.Media.Content, mediaType)
+			if err != nil {
+				return nil, err
+			}
+			mimetype := req.Media.Mimetype
+			if mimetype == "" {
+				mimetype = "image/webp"
+			}
+			var width, height uint32
+			if size, sizeErr := bimg.NewImage(req.Media.Content).Size(); sizeErr == nil {
+				width = uint32(size.Width)
+				height = uint32(size.Height)
+			}
+			message.StickerMessage = &waE2E.StickerMessage{
+				Mimetype:      proto.String(mimetype),
+				URL:           &mediaResponse.URL,
+				DirectPath:    &mediaResponse.DirectPath,
+				MediaKey:      mediaResponse.MediaKey,
+				FileEncSHA256: mediaResponse.FileEncSHA256,
+				FileSHA256:    mediaResponse.FileSHA256,
+				FileLength:    &mediaResponse.FileLength,
+				Width:         &width,
+				Height:        &height,
 			}
 		}
 	}
