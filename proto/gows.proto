@@ -126,6 +126,11 @@ service MessageService {
   rpc JoinCommunity(GroupCodeRequest) returns (Json);
 
   //
+  // Business
+  //
+  rpc GetBusinessProfile(JidRequest) returns (Json);
+
+  //
   // Actions
   //
   rpc GetProfilePicture (ProfilePictureRequest) returns (ProfilePictureResponse);
