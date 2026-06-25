@@ -29,8 +29,12 @@ func (s *Server) MuteChat(ctx context.Context, req *__.ChatMuteRequest) (*__.Emp
 			muteEndMs *= 1000
 		}
 		remaining := time.Duration(muteEndMs-time.Now().UnixMilli()) * time.Millisecond
-		if remaining < 0 {
-			remaining = 0
+		if remaining <= 0 {
+			patch := appstate.BuildMute(jid, false, 0)
+			if err := cli.SendAppState(patch); err != nil {
+				return nil, err
+			}
+			return &__.Empty{}, nil
 		}
 		muteDuration = remaining
 	case req.GetDurationSeconds() != nil:
